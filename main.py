@@ -1,9 +1,8 @@
 tablero = [[], [], [], [], [], [], []]
 
-jugador_actual = 'X'  # persona
+jugador_actual = 'X'  # persona; O es la ia
 
 ALTURA_MAXIMA = 7
-
 
 
 def cambiar_jugador():
@@ -96,8 +95,10 @@ def hay_4_seguidos(lineas):
                 return ficha
             ficha_ant = ficha
 
+
 def get_abiertos():
     return [i for i in range(len(tablero)) if len(tablero[i]) < ALTURA_MAXIMA]
+
 
 def minimax(profundidad,jugador):
     ganador = hay_ganador()
@@ -114,10 +115,10 @@ def minimax(profundidad,jugador):
         mejor_valor = -1000000
         valores = []
         for pos in abiertos:
-            tablero[pos].append(jugador)
+            tablero[pos].append(jugador) # "generar" estado hijo
             val = max(val, minimax(profundidad-1,'X')[0])
-            tablero[pos].pop()
-            if val > mejor_valor:
+            tablero[pos].pop() #volver al estado actual
+            if val > mejor_valor:  #guardar la columna de la mejor jugada
                 mejor_valor = val
                 posicion_mejor = pos
             valores.append(val)
@@ -131,25 +132,58 @@ def minimax(profundidad,jugador):
             tablero[pos].pop()
 
         return val2,None
+def minimax_alpha_beta(profundidad,alpha,beta,jugador):
+    ganador = hay_ganador()
+    if ganador == 'X':
+        return -1000000,None
+    if ganador == 'O':
+        return 1000000,None
+    if profundidad == 0:
+        return valorar_tablero(),None
+    if jugador == 'O':
+        val = -1000000
+        abiertos = get_abiertos()
+        posicion_mejor = 0
+        mejor_valor = -1000000
+        for pos in abiertos:
+            tablero[pos].append(jugador) # "generar" estado hijo
+            val = max(val, minimax(profundidad-1,'X')[0])
+            tablero[pos].pop() #volver al estado actual
+            alpha = max(alpha, val)
+            if alpha >= beta:
+                break #poda
+            if val > mejor_valor: #guardar la columna de la mejor jugada
+                mejor_valor = val
+                posicion_mejor = pos
+        return val,posicion_mejor
+    else:
+        val2 = 1000000
+        abiertos = get_abiertos()
+        for pos in abiertos:
+            tablero[pos].append(jugador)
+            val2 = min(val2, minimax(profundidad - 1,'O')[0])
+            tablero[pos].pop()
+            beta = min(beta, val2)
+            if alpha >= beta:
+                break # poda
+        return val2,None
 
-
-
-def heuristico():
-    #sobre el tablero acutal
-    valor = 0
-    filas = get_filas()
-    diagonales = get_diagonales()
-    columnas = [[fila[i] for fila in filas] for i in range(len(filas[0]))]
-    lineas = diagonales + filas + columnas
-    for linea in lineas:
-        valor += heuristico_linea(linea)
-
-def heuristico_linea(linea):
-    cont_x=0
-    cont_o=0
-
-    for ficha in linea:
-        pass
+# def heuristico():
+#     #sobre el tablero acutal
+#     valor = 0
+#     filas = get_filas()
+#     diagonales = get_diagonales()
+#     columnas = [[fila[i] for fila in filas] for i in range(len(filas[0]))]
+#     lineas = diagonales + filas + columnas
+#     for linea in lineas:
+#         valor += heuristico_linea(linea)
+#
+# def heuristico_linea(linea):
+#     cont_x=0
+#     cont_o=0
+#
+#     for ficha in linea:
+#         pass
 
 
 
@@ -208,16 +242,18 @@ def valoraTira(numFichasSeguidas, numFichas,numHuecosSeguidos,numHuecos):
 
 
 imprimir_tablero()
+PROFUNDIDAD = 4
 while True:
     if jugador_actual == 'X':
         try:
             columna = int(input("juegan" + jugador_actual + " : "))
             meter_ficha(columna)
         except:
+            print("no valido")
             continue
     else:
-        tupla = minimax(4, 'O')
-        print(tupla[0])
+        tupla = minimax_alpha_beta(PROFUNDIDAD,-1000000,1000000, 'O')
+        print("heuristico: ", tupla[0], "columna: ",tupla[1])
         meter_ficha(tupla[1])
     imprimir_tablero()
     posible_ganador = hay_ganador()
@@ -225,4 +261,3 @@ while True:
         print("Ganan " + jugador_actual)
         break
     jugador_actual = cambiar_jugador()
-
