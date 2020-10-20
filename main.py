@@ -62,6 +62,7 @@ def get_filas():
         filas.append(fila)
     return filas
 
+
 def get_diagonales():
     filas = get_filas()
     # daigonales hacia la derecha
@@ -82,6 +83,7 @@ def get_diagonales():
             diagonales.append(diagonal_arriba)
     return diagonales
 
+
 def hay_4_seguidos(lineas):
     cont = 1
     for fila in lineas:
@@ -100,100 +102,146 @@ def get_abiertos():
     return [i for i in range(len(tablero)) if len(tablero[i]) < ALTURA_MAXIMA]
 
 
-def minimax(profundidad,jugador):
+# def minimax(profundidad,jugador):
+#     ganador = hay_ganador()
+#     if ganador == 'X':
+#         return -1000000,None
+#     if ganador == 'O':
+#         return 1000000,None
+#     if profundidad == 0:
+#         return valorar_tablero(),None
+#     if jugador == 'O':
+#         val = -1000000
+#         abiertos = get_abiertos()
+#         posicion_mejor = 0
+#         mejor_valor = -1000000
+#         valores = []
+#         for pos in abiertos:
+#             tablero[pos].append(jugador) # "generar" estado hijo
+#             val = max(val, minimax(profundidad-1,'X')[0])
+#             tablero[pos].pop() #volver al estado actual
+#             if val > mejor_valor:  #guardar la columna de la mejor jugada
+#                 mejor_valor = val
+#                 posicion_mejor = pos
+#             valores.append(val)
+#         return val,posicion_mejor
+#     else:
+#         val2 = 1000000
+#         abiertos = get_abiertos()
+#         for pos in abiertos:
+#             tablero[pos].append(jugador)
+#             val2 = min(val2, minimax(profundidad - 1,'O')[0])
+#             tablero[pos].pop()
+#
+#         return val2,None
+
+def minimax_alpha_beta(profundidad, alpha, beta, jugador):
     ganador = hay_ganador()
     if ganador == 'X':
-        return -1000000,None
+        return -1000000, None
     if ganador == 'O':
-        return 1000000,None
+        return 1000000, None
     if profundidad == 0:
-        return valorar_tablero(),None
+        return heuristico(), None
     if jugador == 'O':
-        val = -1000000
+        valor = -10000000
         abiertos = get_abiertos()
         posicion_mejor = 0
-        mejor_valor = -1000000
-        valores = []
+        mejor_valor = -100000000
         for pos in abiertos:
-            tablero[pos].append(jugador) # "generar" estado hijo
-            val = max(val, minimax(profundidad-1,'X')[0])
-            tablero[pos].pop() #volver al estado actual
-            if val > mejor_valor:  #guardar la columna de la mejor jugada
-                mejor_valor = val
+            tablero[pos].append(jugador)  # "generar" estado hijo
+            valor = max(valor, minimax_alpha_beta(profundidad - 1, alpha, beta, 'X')[0])
+            tablero[pos].pop()  # volver al estado actual
+            alpha = max(alpha, valor)
+            if alpha >= beta:
+                break  # poda
+            if valor > mejor_valor:  # guardar la columna de la mejor jugada
+                mejor_valor = valor
                 posicion_mejor = pos
-            valores.append(val)
-        return val,posicion_mejor
+        return valor, posicion_mejor, abiertos
     else:
-        val2 = 1000000
+        valor2 = 10000000
         abiertos = get_abiertos()
         for pos in abiertos:
             tablero[pos].append(jugador)
-            val2 = min(val2, minimax(profundidad - 1,'O')[0])
+            valor2 = min(valor2, minimax_alpha_beta(profundidad - 1, alpha, beta, 'O')[0])
             tablero[pos].pop()
-
-        return val2,None
-def minimax_alpha_beta(profundidad,alpha,beta,jugador):
-    ganador = hay_ganador()
-    if ganador == 'X':
-        return -1000000,None
-    if ganador == 'O':
-        return 1000000,None
-    if profundidad == 0:
-        return valorar_tablero(),None
-    if jugador == 'O':
-        val = -1000000
-        abiertos = get_abiertos()
-        posicion_mejor = 0
-        mejor_valor = -1000000
-        for pos in abiertos:
-            tablero[pos].append(jugador) # "generar" estado hijo
-            val = max(val, minimax(profundidad-1,'X')[0])
-            tablero[pos].pop() #volver al estado actual
-            alpha = max(alpha, val)
+            beta = min(beta, valor2)
             if alpha >= beta:
-                break #poda
-            if val > mejor_valor: #guardar la columna de la mejor jugada
-                mejor_valor = val
-                posicion_mejor = pos
-        return val,posicion_mejor
-    else:
-        val2 = 1000000
-        abiertos = get_abiertos()
-        for pos in abiertos:
-            tablero[pos].append(jugador)
-            val2 = min(val2, minimax(profundidad - 1,'O')[0])
-            tablero[pos].pop()
-            beta = min(beta, val2)
-            if alpha >= beta:
-                break # poda
-        return val2,None
-
-# def heuristico():
-#     #sobre el tablero acutal
-#     valor = 0
-#     filas = get_filas()
-#     diagonales = get_diagonales()
-#     columnas = [[fila[i] for fila in filas] for i in range(len(filas[0]))]
-#     lineas = diagonales + filas + columnas
-#     for linea in lineas:
-#         valor += heuristico_linea(linea)
-#
-# def heuristico_linea(linea):
-#     cont_x=0
-#     cont_o=0
-#
-#     for ficha in linea:
-#         pass
+                break  # poda
+        return valor2, None, None
 
 
-
-def valorar_tablero():
-    puntuacion = 0
-
+def heuristico():
+    # sobre el tablero acutal
+    valor = 0
     filas = get_filas()
     diagonales = get_diagonales()
     columnas = [[fila[i] for fila in filas] for i in range(len(filas[0]))]
     lineas = diagonales + filas + columnas
+    for linea in lineas:
+        valor += heuristico_linea(linea)
+    return valor
+
+
+def heuristico_linea(linea):
+    # devuelve el numero de fichas que hay pos cada posible(un jugador puede ganar en ella)
+    puntuacion = 0
+    for i in range(len(linea) - 3):
+        puntuacion += evaluar_4_elementos(linea[i:4 + i])
+    return puntuacion
+
+
+def evaluar_4_elementos(linea):
+    # linea va a tener 4 elementos
+    cant_o = 0
+    cant_x = 0
+    for elemento in linea:
+        if elemento == 'X':
+            cant_x += 1
+        elif elemento == 'O':
+            cant_o += 1
+    if cant_x == 0:
+        return cant_o
+    elif cant_o == 0:
+        return -1 * cant_x
+
+    return 0
+
+
+imprimir_tablero()
+PROFUNDIDAD = 5
+ALPHA = -1000000000
+BETA = 1000000000
+while True:
+    if jugador_actual == 'X':
+        try:
+            columna = int(input("juegan" + jugador_actual + " : "))
+            meter_ficha(columna)
+        except:
+            print("no valido")
+            continue
+    else:
+        tupla = minimax_alpha_beta(PROFUNDIDAD, ALPHA, BETA, 'O')
+        print("heuristico: ", tupla[0], "columna: ", tupla[1], tupla[2])
+        meter_ficha(tupla[1])
+    imprimir_tablero()
+    posible_ganador = hay_ganador()
+    if posible_ganador != '-':
+        print("Ganan " + jugador_actual)
+        break
+    jugador_actual = cambiar_jugador()
+
+
+"""
+otro posible heuristico
+
+def valorar_tablero():
+    puntuacion = 0
+    filas = get_filas()
+    diagonales = get_diagonales()
+    columnas = [[fila[i] for fila in filas] for i in range(len(filas[0]))]
+    lineas = filas + columnas + diagonales
     for fila in lineas:
         maq = 0
         per = 0
@@ -206,58 +254,38 @@ def valorar_tablero():
                 maq += 1
                 segmaq += 1
                 if (per > 0):
-                    hue=seghue
+                    hue = seghue
                 else:
                     hue += seghue
-                per=0
-                seghue=0
-                segper=0
-            if (elemento == 'X') :
+                per = 0
+                seghue = 0
+                segper = 0
+            if (elemento == 'X'):
                 per += 1
                 segper += 1
                 if (maq > 0):
-                    hue=seghue
+                    hue = seghue
                 else:
                     hue += seghue
-                maq=0
-                seghue=0
-                segmaq=0
+                maq = 0
+                seghue = 0
+                segmaq = 0
             if (elemento == '-'):
                 seghue += 1
-                segmaq=0
-                segper=0
-            if (segmaq+hue+seghue >= 4):
+                segmaq = 0
+                segper = 0
+            if (segmaq + hue + seghue >= 4):
                 puntuacion += valoraTira(segmaq, maq, seghue, hue)
-            if (segper+hue+seghue >= 4):
+            if (segper + hue + seghue >= 4):
                 puntuacion -= valoraTira(segper, per, seghue, hue)
 
     return puntuacion
 
-def valoraTira(numFichasSeguidas, numFichas,numHuecosSeguidos,numHuecos):
-        PESOS_PUNTUACION=[0,10,100,10000,1000000,1000000,1000000]
-        if (numFichas+numHuecos)>=4:
-            return PESOS_PUNTUACION[numFichasSeguidas]+10*numFichas+3*numHuecosSeguidos+numHuecos
-        else:
-            return 0
 
-
-imprimir_tablero()
-PROFUNDIDAD = 4
-while True:
-    if jugador_actual == 'X':
-        try:
-            columna = int(input("juegan" + jugador_actual + " : "))
-            meter_ficha(columna)
-        except:
-            print("no valido")
-            continue
+def valoraTira(numFichasSeguidas, numFichas, numHuecosSeguidos, numHuecos):
+    PESOS_PUNTUACION = [0, 10, 100, 10000, 0, 0, 0]
+    if (numFichas + numHuecos) >= 4:
+        return PESOS_PUNTUACION[numFichasSeguidas] + 10 * numFichas + 3 * numHuecosSeguidos + numHuecos
     else:
-        tupla = minimax_alpha_beta(PROFUNDIDAD,-1000000,1000000, 'O')
-        print("heuristico: ", tupla[0], "columna: ",tupla[1])
-        meter_ficha(tupla[1])
-    imprimir_tablero()
-    posible_ganador = hay_ganador()
-    if posible_ganador != '-':
-        print("Ganan " + jugador_actual)
-        break
-    jugador_actual = cambiar_jugador()
+        return 0
+"""
