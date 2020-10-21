@@ -4,7 +4,6 @@ jugador_actual = 'X'  # persona; O es la ia
 
 ALTURA_MAXIMA = 7
 
-
 def cambiar_jugador():
     if jugador_actual == 'X':
         return 'O'
@@ -99,7 +98,11 @@ def hay_4_seguidos(lineas):
 
 
 def get_abiertos():
-    return [i for i in range(len(tablero)) if len(tablero[i]) < ALTURA_MAXIMA]
+    columnas = [3,4,2,5,1,6,0] #con este orden se priorizan las columnas del medio
+    for i in range(len(tablero)):
+        if len(tablero[i]) >=ALTURA_MAXIMA:
+            columnas.remove(i)
+    return columnas #[i for i in range(len(tablero)) if len(tablero[i]) < ALTURA_MAXIMA]
 
 
 # def minimax(profundidad,jugador):
@@ -158,7 +161,7 @@ def minimax_alpha_beta(profundidad, alpha, beta, jugador):
             if valor > mejor_valor:  # guardar la columna de la mejor jugada
                 mejor_valor = valor
                 posicion_mejor = pos
-        return valor, posicion_mejor, abiertos
+        return valor, posicion_mejor
     else:
         valor2 = 10000000
         abiertos = get_abiertos()
@@ -169,7 +172,7 @@ def minimax_alpha_beta(profundidad, alpha, beta, jugador):
             beta = min(beta, valor2)
             if alpha >= beta:
                 break  # poda
-        return valor2, None, None
+        return valor2, None
 
 
 def heuristico():
@@ -213,6 +216,7 @@ imprimir_tablero()
 PROFUNDIDAD = 5
 ALPHA = -1000000000
 BETA = 1000000000
+
 while True:
     if jugador_actual == 'X':
         try:
@@ -223,7 +227,7 @@ while True:
             continue
     else:
         tupla = minimax_alpha_beta(PROFUNDIDAD, ALPHA, BETA, 'O')
-        print("heuristico: ", tupla[0], "columna: ", tupla[1], tupla[2])
+        print("heuristico: ", tupla[0], "columna: ", tupla[1])
         meter_ficha(tupla[1])
     imprimir_tablero()
     posible_ganador = hay_ganador()
